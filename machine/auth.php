@@ -30,6 +30,12 @@ class auth
     
     public function __clone() { return false;}
 
+    public function id()
+    {
+        if(!self::getData('id')) return false;
+        return self::getData('id');
+    }
+    
     public function check($group=false,$id=false)
     {
         if(!self::getData('type')) return false;

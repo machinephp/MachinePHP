@@ -41,18 +41,28 @@ class settings
 
         require _M_SETTINGS_ROOT.'auth.php';
         
-        self::$data['__auth__']['tables'] = $tables;
-        self::$data['__auth__']['groups'] = $groups;
-        self::$data['__auth__']['types'] = $types;
-        self::$data['__auth__']['users'] = $users;
+        self::$data['__auth__']['tables']       = $tables;
+        self::$data['__auth__']['groups']       = $groups;
+        self::$data['__auth__']['types']        = $types;
+        self::$data['__auth__']['users']        = $users;
 
         if(!file_exists(_M_SETTINGS_ROOT.'db.php'))
             throw new mException('Settings [database] file does not exist.');
 
         require _M_SETTINGS_ROOT.'db.php';
 
-        self::$data['__db__']['connections'] = $connections;
-        self::$data['__db__']['primary'] = $primary;
+        self::$data['__db__']['connections']    = $connections;
+        self::$data['__db__']['primary']        = $primary;
+        
+        
+        if(!file_exists(_M_SETTINGS_ROOT.'cache.php'))
+            throw new mException('Settings [cache] file does not exist.');
+
+        require _M_SETTINGS_ROOT.'cache.php';
+
+        self::$data['__cache__']['memcache']    = $memcache;
+        self::$data['__cache__']['filesystem']  = $filesystem;
+        
     }
 
 

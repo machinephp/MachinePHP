@@ -2,14 +2,10 @@
 
 namespace _m\obj;
 
-define('CONTENT_TYPES',array('video','joke','caption'));    //@TODO: move to settings
-
 class _content
 {
-    public $type = false;
-    public $identifier = false;
     
-    public function search($query=false,$limit=false,$order=false)
+    public function search($query=false,$limit=false,$order=false,$type=false)
     {
         if($query==false&&!isset($_GET['query']))
             return self::listing($limit);
@@ -18,30 +14,43 @@ class _content
             $query = $_GET['query'];
             
         $where = array( array(SQL_CUSTOM => "title LIKE '%".$query."%' OR content LIKE '%".$query."%'"));
-        
+
+        $where = self::whereWrapper($where,$type);
+
         return self::listing($limit,false,false,false,$where,$order);
     }
     
-    public function listing($limit=false,$tags=false,$taxonomy=false,$vote=false,$where=false,$order=false,$fields='*')
+    public function listing($limit=false,$tags=false,$taxonomy=false,$vote=false,$where=false,$order=false,$fields=false,$type=false)
     {
         if($limit===false) $limit = array(0,10);
-        if($order==false) $order = ' content_id DESC ';
+        if($order==false) $order = ' content.content_id DESC ';
+        if($fields==false||$fields==null) $fields = 'content.*, '.($type?'content_'.$type.'.*,':'').'  user.nickname user_name';
         
         if(is_array($fields))
             $fields[0] = 'SQL_CALC_FOUND_ROWS '.$fields[0];
         else
             $fields = 'SQL_CALC_FOUND_ROWS '.$fields;
-        
-        return \_m\db::select('content',$fields,$where,$order,$limit);
+
+        $where = self::whereWrapper($where,$type);
+
+        $tables = self::getTables($type);
+
+        return \_m\db::select($tables,$fields,$where,$order,$limit);
     }
     
-    public function get($identifier=false)
+    public function get($identifier=false,$type=false)
     {
         if($identifier===false) return false;
         
-        $where = self::whereFromIdentifier($identifier,'c');
+        $where = self::whereFromIdentifier($identifier,'content');
+
+        $where = self::whereWrapper($where,$type);
         
-        $data =  \_m\db::select('content c LEFT JOIN user u ON (c.creator=u.id)','c.*, u.nickname user_name',$where);
+        $fields = 'content.*, '.($type?'content_'.$type.'.*,':'').'  user.nickname user_name';
+        
+        $tables = self::getTables($type);
+        
+        $data =  \_m\db::select($tables,$fields,$where);
         
         if(is_array($data)&&isset($data[0]))
             return $data[0];
@@ -49,33 +58,46 @@ class _content
             return false;
     }
     
-    public function update($identifier=false,$data=false)
+    public function update($identifier=false,$data=false,$type=false)
     {
         if($data===false) return false;
         
         $where = self::whereFromIdentifier($identifier);
-        
+
+        $where = self::whereWrapper($where,$type);
+
         return\_m\db::update('content',$data,$where);
         
     }
     
-    public function delete($identifier=false,$where=false)
+    public function delete($identifier=false,$where=false,$type=false)
     {
         
         if($identifier)
             $where = self::whereFromIdentifier($identifier);
-        
+
+        $where = self::whereWrapper($where,$type);
+
         //@TODO: write delete
     }
     
-    public function create($data=false)
+    public function create($data=false,$type=false)
     {
         if($data===false) return false;
         
+        if(!isset($data['title'])) return false;
+        if(!isset($data['label'])) $data['label'] = self::makeLabel($data['title']);
+        
+        //@TEMP: force admin id
+        $data['creator'] = 1;
+        //if(!isset($data['creator'])) $data['creator'] = \_m\auth::id();
+        
+        $data['type'] = $type;
+
         return \_m\db::insert('content',$data);
     }
     
-    public function listing_tag($tag,$start=0,$total=10)
+    public function listing_tag($tag,$start=0,$total=10,$type=false)
     {
         //\_m\db::select(array('content c','content_tag ct'),'c.*',array(SQL_AND,array('',''),array('','')));
         
@@ -92,7 +114,7 @@ class _content
         
     }
     
-    public function listing_badge($badge,$start=0,$total=10)
+    public function listing_badge($badge,$start=0,$total=10,$type=false)
     {
         $sql = "SELECT c.* 
                     FROM content c, content__badge cb, badge b 
@@ -141,7 +163,7 @@ class _content
         
     }
     
-    public function tag_list($id=false)
+    public function tag_list($id=false,$type=false)
     {
         if($id===false) return false;
 
@@ -290,6 +312,8 @@ class _content
         
         return $res;
     }
+    
+    
 
 
     public function vote_up($contentID=false,$value=1)
@@ -315,7 +339,7 @@ class _content
         //@TODO: logic to allow only admin to set dif value
 
     }
-    
+    /*
     public function whereFromIdentifier($identifier,$tablePrefix=false)
     {
         if($tablePrefix) $tablePrefixString = $tablePrefix.'.';
@@ -337,6 +361,47 @@ class _content
         }
         
         return array($where);
+    }
+*/
+    
+    public function whereFromIdentifier($identifier,$tablePrefix=false)
+    {
+        //@TODO: restore original object based version
+        
+        if($tablePrefix) $tablePrefixString = $tablePrefix.'.';
+        else $tablePrefixString = '';
+        
+        if(is_numeric($identifier))
+            $where = $tablePrefixString.'content_id = '.$identifier;
+        else
+            $where = $tablePrefixString.'label = '.$identifier;
+        
+        return $where;
+    }
+    
+    public function whereWrapper($where='',$type=false,$tablePrefix=false)
+    {
+        if(!$type) return $where;
+        if($tablePrefix) $tablePrefixString = $tablePrefix.'.';
+        else $tablePrefixString = 'content.';
+
+        if(is_array($where))
+        {
+            $where = array(SQL_AND => array($where,array($tablePrefixString.'type' => $type)));
+            $where = array(SQL_AND => array($where,array('`'.$tablePrefixString.'content_id`' => '`content_'.$type.'.content_id`')));
+        }
+        elseif($where=='')
+        {
+            $where = $tablePrefixString.'type = '."'".$type."' AND ".$tablePrefixString.'content_id = content_'.$type.'.content_id';
+        }
+        else
+        {
+            $where .= ' AND '.$tablePrefixString.'type = '."'".$type."' AND ".$tablePrefixString.'content_id = content_'.$type.'.content_id';
+        }
+
+
+
+        return $where;
     }
     
     public function makeLabel($title)
@@ -396,6 +461,14 @@ class _content
         
         return $retEntities;
 
+    }
+
+    public function getTables($type=false)
+    {
+        if(!$type||$type=='')
+            return array('content LEFT JOIN user ON (content.creator=user.id)');
+        else
+            return array('content LEFT JOIN user ON (content.creator=user.id)','content_'.$type);
     }
 }
 

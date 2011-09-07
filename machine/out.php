@@ -95,7 +95,7 @@ class out
     
     private function loadComponent()
     {
-         self::$out = self::$view = self::component(\_m\req::machine('name'),\_m\req::machine('comp_name'),\_m\req::get(),false);
+         self::$out = self::$view = self::component(\_m\request::machine('name'),\_m\request::machine('comp_name'),\_m\request::get(),false);
     }
 
     private function loadData()
@@ -149,6 +149,30 @@ class out
 
     }
     
+    private function getJSConrollerFileName($componentName)
+    {
+        $parts = explode('@',$componentName);
+        
+        $context='';
+        if(sizeof($parts)>1)
+            $context = $parts[1];
+        else
+            $context = substr(\_m\context::getPath(),1);
+
+        $component  = str_replace('/','--',$parts[0]);
+
+        $file = str_replace('//','/',_M_APP_ROOT.((substr($context,0,1)!='/')?$context:'_components'.$context).'/--'.$component.'.js');
+       
+        if(!file_exists($file))
+            $file = str_replace('//','/',_M_APP_ROOT.((substr($context,0,1)!='/')?$context:'_components'.$context).'--'.$component.'.js');
+        
+        if(!file_exists($file))
+            return false;   //@ERR: Component file not found
+        
+        return $file;
+
+    }
+    
     public function area()
     {
         //@TODO: write... similar to component... may not be needed
@@ -156,13 +180,36 @@ class out
 
     public function component($name, $componentName=false, $params=array(), $includeDiv=true, $class=false, $style=array())
     {
+         
         //@TODO: style as an associative array which applies to the div tag
-        if($params==array()) $params = \_m\req::get();
+        if($params==array()) $params = \_m\request::get();
         $content = self::includeContent(self::getComponentFileName($componentName),$params);
-        
+        $JScontent = self::includeContent(self::getJSConrollerFileName($componentName),$params);
+        $JSData = self::getJSData($componentName);
         //@TODO: retrieve component - file mapping from context data
+        
+        $script = '';
+        if($JScontent!='')
+        {
+            $script = '<script>';
+               
+            $curComp = '';
+            foreach($JSData['script_name_parts'] as $comp)
+            {
+                $curComp = (($curComp=='')?$comp:($curComp.'.'.$comp));
+                $script .= " if (typeof _m.comp.".$curComp." == 'undefined') _m.comp.".$curComp." =  new Object();
+                    ";
+            }
 
-
+            $script .= '
+              function comp_'.$JSData['script_name'].'()  
+               { 
+               '.$JScontent.'
+                   }
+            _m.comp.'.$JSData['script_namespace'].' = new comp_'.$JSData['script_name'].'();    
+            </script>';
+        }
+        
         $styleText = 'style="';
         if(sizeof($style))
             foreach($style as $row)
@@ -173,14 +220,17 @@ class out
         if($class)
             $classText = 'class="'.$class.'"';
 
+        
+        //@TODO: include style text
+        
         if($includeDiv)
-            return '<div id="_m_'.$name.'" '.$styleText.' '.$classText.'>'.$content.'</div>';
+            return '<div id="_m_'.$name.'"  '.$classText.' test="3">'.$content.'</div>'.$script;
         else
             return $content;
     }
 
-    public function comp($name, $fileName=false, $style=array())    //- shortcut to component
-    {   return self::component($name, $fileName, $style);}
+    public function comp($name, $componentName=false, $params=array(), $includeDiv=true, $class=false, $style=array())    //- shortcut to component
+    {   return self::component($name, $componentName, $params, $includeDiv, $class, $style);}
 
     public function view($params=array())
     {
@@ -206,6 +256,32 @@ class out
         else
             self::$out .= $scriptContent;
     }
+    
+    public function getJSData($componentName)
+    {
+        $parts = explode('@',$componentName); 
+        
+        $context='';
+        if(sizeof($parts)>1)
+            $context = $parts[1];
+
+        $component  = str_replace('/','--',$parts[0]);
+        
+        //@TODO: error trapping
+        
+        $data = array();
+        $data['script_name']        = str_replace('/','',$context).'_'.str_replace('/','',$component);
+        $data['script_namespace']   = str_replace('/','',$context).'.'.str_replace('/','',$component);
+        $data['script_name_parts'] = explode('.',$data['script_namespace']);
+        
+        foreach($data['script_name_parts'] as $key => $value)
+        {
+            if($data['script_name_parts'][$key]=='') unset($data['script_name_parts'][$key]);
+        }
+        
+        return $data;
+    }
+    
 
 }
 

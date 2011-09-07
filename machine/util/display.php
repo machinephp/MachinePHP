@@ -82,7 +82,7 @@ class display
             $labels[] = $i;
             $vals[] = $i;
         }
-        $out = $this->dropdown($idBase.'_hour',$hour,$labels,$vals,false);
+        $out = self::dropdown($idBase.'_hour',$hour,$labels,$vals,false);
 
         $labels = array();
         $vals = array();
@@ -92,11 +92,11 @@ class display
             $vals[] = $i;
         }
 
-        $out .= $this->dropdown($idBase.'_min',$min,$labels,$vals,false);
+        $out .= self::dropdown($idBase.'_min',$min,$labels,$vals,false);
 
         $labels = array('AM','PM');
         $vals = array(1,2);
-        $out .= $this->dropdown($idBase.'_ampm',$ampm,$labels,$vals,false);
+        $out .= self::dropdown($idBase.'_ampm',$ampm,$labels,$vals,false);
 
         return $out;
 
@@ -139,7 +139,7 @@ class display
         $date = $parts[0];
         $time = $parts[1];
 
-        return $this->date($date).' '.$this->time($time);
+        return self::date($date).' '.self::time($time);
         
         
     }
@@ -172,13 +172,13 @@ class display
             $labels[] = $i;
             $vals[] = $i;
         }
-        $out = $this->dropdown($idBase.'_year',$year,$labels,$vals);
+        $out = self::dropdown($idBase.'_year',$year,$labels,$vals);
 
 
         $labels = array('January','February','March','April','May','June','July','August','September','October','November','December');
         $vals = array(1,2,3,4,5,6,7,8,9,10,11,12);
 
-        $out .= $this->dropdown($idBase.'_month',$month,$labels,$vals);
+        $out .= self::dropdown($idBase.'_month',$month,$labels,$vals);
 
 
         $labels = array();
@@ -189,7 +189,7 @@ class display
             $vals[] = $i;
         }
 
-        $out .= $this->dropdown($idBase.'_day',$day,$labels,$vals);
+        $out .= self::dropdown($idBase.'_day',$day,$labels,$vals);
 
         return $out;
     }
@@ -251,9 +251,9 @@ class display
     	    if($useDate)
     	    {
     	    	    $out.= ' <span>Start Date </span>';
-		    $out.= $this->inputDate('date_start',date('Y-m-d'));
+		    $out.= self::inputDate('date_start',date('Y-m-d'));
 		    $out.= ' <span>End Date </span>';
-		    $out.= $this->inputDate('date_end');
+		    $out.= self::inputDate('date_end');
     	    }
 
     	    if($fieldData)
@@ -267,8 +267,8 @@ class display
     	    	    if(isset($_POST['list_order_direction']))
     	    	    	    $orderDir = $_POST['list_order_direction'];
 
-    	    	    $out .= $this->dropdown('list_order_field',$orderBy,$fieldData[1],$fieldData[0]);
-    	    	    $out .= $this->dropdown('list_order_direction',$orderBy,array('ASC','DESC'),array('Ascending','Decending'));
+    	    	    $out .= self::dropdown('list_order_field',$orderBy,$fieldData[1],$fieldData[0]);
+    	    	    $out .= self::dropdown('list_order_direction',$orderBy,array('ASC','DESC'),array('Ascending','Decending'));
 
     	    }
 

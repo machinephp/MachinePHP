@@ -43,10 +43,15 @@ class script
         else
             $scriptContent = '';
         
+        //@TODO: initialize subspaces i.e: .comp and .video
+        
         $out = 'function _m_'.$label.'()
                 {
                     '.$scriptContent.'
                 }
+
+                
+
                 _m.app = new _m_'.$label.'();';
 
         self::$out[$context] = $out;

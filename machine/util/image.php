@@ -1,7 +1,12 @@
 <?php
-/* 
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+namespace _m\util;
+
+class image
+{
+    public function import($name)
+    {
+        //@TODO: write image import
+    }
+}
 
 ?>

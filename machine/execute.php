@@ -110,10 +110,9 @@ class execute
         if(!self::checkMethodExists(self::$object, $method))
             return \_m::setError('Object does not exist',true);
 
-       
         
-        if(\_m\req::machine('obj_params'))
-            $params = \_m\req::machine('obj_params');
+        if(\_m\request::machine('obj_params'))
+            $params = \_m\request::machine('obj_params');
         else if(isset($parts[2]))
             $params = $parts[2];
         else

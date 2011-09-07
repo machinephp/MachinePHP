@@ -1,3 +1,4 @@
+
 <?php
 
 class _m
@@ -44,19 +45,19 @@ class _m
             \_m\service::load();
 
             \_m\client::load();
-            
-            \_m\req::load();
 
-            \_m\context::load();
+            \_m\request::load();
 
-            \_m\cache::load();      //- later edition
+            \_m\context::load(); 
 
-            \_m\db::load();
+            \_m\cache::load();    
+
+            \_m\db::load(); 
 
             \_m\auth::load();
 
             \_m\script::load();
-            
+
             \_m\execute::load();
 
             \_m\out::load();
@@ -146,7 +147,7 @@ class _m
             self::$message = array();
     }
 
-    //@TODO: remove internal
+
     public function getError($internal=false,$format=false)
     {
         if($internal)
@@ -231,7 +232,7 @@ class _m
         if(!file_exists(_M_FILE_ROOT.'include/'.$filename))
             return false;
         
-        include _M_FILE_ROOT.'include/'.$filename;
+        include_once _M_FILE_ROOT.'include/'.$filename;
         
         return true;
     }
@@ -299,10 +300,11 @@ function __autoload($fullClassName)
     elseif(($file2!=_M_FILE_ROOT)&&file_exists($file2))
         require_once $file2;
     else
-        throw new mException('REQUIRE FAIL '.$file);
+        return true;
+        //throw new mException('REQUIRE FAIL '.$file);
 
-    //@TODO: throw error if file not found
-    //@TODO: include classes without the machine class name from another dir
+    //having it return true instead of throwing an error in order to allow for third party includes
+    // ... at some point this should be changed to be less forgiving for missing machine files
 }
 
 class mException extends Exception

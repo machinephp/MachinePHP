@@ -2,7 +2,7 @@
 
 namespace _m;
 
-class req
+class request
 {
     private static $instance;
 
@@ -42,7 +42,7 @@ class req
         foreach(self::$data as $name =>$value)
             if(strpos($name,'_m_')!==false&&strpos($name,'_m_')==0)
                 self::$machine[str_replace('_m_','',$name)] = $value;
-
+            
         //this is logic to handle sub machine data (auth, etc)
         foreach(self::$data as $name =>$value)
             if(strpos($name,'_auth_')!==false&&strpos($name,'_auth_')==0)
